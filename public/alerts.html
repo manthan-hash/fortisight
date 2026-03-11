@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerts - FortiSight</title>
+  <link rel="stylesheet" href="styles-new.css">
+</head>
+<body class="app-body">
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-brand">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span class="brand-name">FortiSight</span>
+      </div>
+      <nav class="header-nav">
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="alerts.html" class="nav-link active">Alerts</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+        <button class="nav-btn logout" onclick="logout()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16,17 21,12 16,7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Logout
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Alerts Content -->
+  <main class="app-main">
+    <!-- Filters Section -->
+    <section class="alerts-filters">
+      <h2>Event Center</h2>
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="severityFilter">Severity</label>
+          <select id="severityFilter" class="filter-select">
+            <option value="">All Levels</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="typeFilter">Alert Type</label>
+          <select id="typeFilter" class="filter-select">
+            <option value="">All Types</option>
+            <option value="motion">Motion Detected</option>
+            <option value="face">Face Recognition</option>
+            <option value="intrusion">Intrusion Alert</option>
+            <option value="system">System Event</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="timeFilter">Time Range</label>
+          <select id="timeFilter" class="filter-select">
+            <option value="">All Time</option>
+            <option value="1h">Last Hour</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alerts Table -->
+    <section class="alerts-table-section">
+      <div class="alerts-table-container">
+        <table class="alerts-table" id="alertsTable">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>Severity</th>
+              <th>Risk Score</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="alertsTableBody">
+            <!-- Alerts will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Alert Details Modal -->
+  <div class="modal" id="alertModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Alert Details</h3>
+        <button class="modal-close" onclick="closeAlertModal()">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="alert-detail-grid">
+          <div class="detail-item">
+            <label>Timestamp</label>
+            <p id="modalTimestamp">--</p>
+          </div>
+          
+          <div class="detail-item">
+            <label>Type</label>
+            <p id="modalType">--</p>
+          </div>
+          
+          <div class="detail-item">
+            <label>Location</label>
+            <p id="modalLocation">--</p>
+          </div>
+          
+          <div class="detail-item">
+            <label>Severity</label>
+            <p id="modalSeverity">--</p>
+          </div>
+          
+          <div class="detail-item">
+            <label>Risk Score</label>
+            <div class="risk-score-display" id="modalRiskScore">
+              <span class="risk-value">--</span>
+              <div class="risk-bar">
+                <div class="risk-fill" id="modalRiskFill"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-item full-width">
+            <label>Description</label>
+            <p id="modalDescription">--</p>
+          </div>
+          
+          <div class="detail-item">
+            <label>Face Recognition</label>
+            <div id="modalFaceInfo">
+              <p class="face-status">--</p>
+              <p class="face-confidence">--</p>
+            </div>
+          </div>
+          
+          <div class="detail-item">
+            <label>Thumbnail</label>
+            <div class="thumbnail-container" id="modalThumbnail">
+              <div class="thumbnail-placeholder">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21,15 16,10 5,15"/>
+                </svg>
+                <p>No Image</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-item">
+            <label>Notification History</label>
+            <div class="notification-history" id="modalNotifications">
+              <div class="notification-item">
+                <span class="notification-status">Email:</span>
+                <span class="notification-result">--</span>
+              </div>
+              <div class="notification-item">
+                <span class="notification-status">SMS:</span>
+                <span class="notification-result">--</span>
+              </div>
+              <div class="notification-item">
+                <span class="notification-status">In-App:</span>
+                <span class="notification-result">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="closeAlertModal()">Close</button>
+        <button class="btn primary" onclick="acknowledgeAlert()">Acknowledge Alert</button>
+        <button class="btn success" onclick="markAsResolved()">Mark as Resolved</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

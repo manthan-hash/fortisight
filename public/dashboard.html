@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprehensive Command Center - FortiSight</title>
+  <link rel="stylesheet" href="styles-new.css">
+</head>
+<body class="app-body">
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-brand">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span class="brand-name">FortiSight</span>
+      </div>
+      <nav class="header-nav">
+        <a href="command-center.html" class="nav-link active">Command Center</a>
+        <a href="alerts.html" class="nav-link">Alerts</a>
+        <a href="settings.html" class="nav-link">Settings</a>
+        <button class="nav-btn logout" id="logoutBtn" onclick="handleLogout()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16,17 21,12 16,7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Logout
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Command Center Content -->
+  <main class="app-main">
+    <!-- Status Cards Row -->
+    <section class="status-cards">
+      <div class="status-card">
+        <div class="status-icon online">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div class="status-content">
+          <h3 class="status-value" id="systemStatus">Operational</h3>
+          <p class="status-label">System Status</p>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-icon cameras">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <div class="status-content">
+          <h3 class="status-value" id="camerasOnline">8/12</h3>
+          <p class="status-label">Cameras Online</p>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-icon sensors">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 000-7z"/>
+            <path d="M17 17H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 000-7z"/>
+          </svg>
+        </div>
+        <div class="status-content">
+          <h3 class="status-value" id="sensorsActive">24/24</h3>
+          <p class="status-label">Sensors Active</p>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-icon threat">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="status-content">
+          <h3 class="status-value threat-medium" id="currentThreatLevel">Medium</h3>
+          <p class="status-label">Current Threat Level</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Monitoring Panel -->
+    <section class="monitoring-panel">
+      <div class="monitoring-header">
+        <h2>Live Monitoring</h2>
+        <div class="monitoring-info">
+          <span class="monitoring-location">Front Entrance</span>
+          <span class="live-badge">LIVE</span>
+        </div>
+      </div>
+      
+      <div class="video-container">
+        <div class="video-placeholder">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            <line x1="23" y1="7" x2="17" y2="7"/>
+          </svg>
+          <p>Camera Feed - Front Entrance</p>
+        </div>
+        <div class="video-overlay">
+          <div class="timestamp" id="videoTimestamp">2024-03-09 14:45:32</div>
+        </div>
+      </div>
+      
+      <div class="event-info">
+        <p class="event-description" id="lastEventDescription">Unknown face detected 2 min ago</p>
+      </div>
+    </section>
+
+    <!-- Bottom Section with Widgets and Alerts -->
+    <section class="dashboard-bottom">
+      <!-- Side Widgets -->
+      <div class="side-widgets">
+        <div class="widget">
+          <h3 class="widget-title">Known Faces Today</h3>
+          <div class="widget-value" id="knownFacesToday">12</div>
+        </div>
+        
+        <div class="widget">
+          <h3 class="widget-title">Unknown Faces Today</h3>
+          <div class="widget-value" id="unknownFacesToday">3</div>
+        </div>
+        
+        <div class="widget">
+          <h3 class="widget-title">Current Risk Score</h3>
+          <div class="risk-score" id="currentRiskScore">
+            <span class="risk-value">45</span>
+            <div class="risk-bar">
+              <div class="risk-fill" style="width: 45%; background: #f59e0b;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Alerts Table -->
+      <div class="recent-alerts">
+        <div class="alerts-header">
+          <h3>Recent Alerts</h3>
+          <button class="view-all-btn" onclick="window.location.href='alerts.html'">
+            View All Alerts
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12,5 19,12 12,19"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="alerts-table">
+          <div class="table-header">
+            <div>Time</div>
+            <div>Type</div>
+            <div>Severity</div>
+          </div>
+          <div class="table-body" id="recentAlertsTable">
+            <!-- Alerts will be populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

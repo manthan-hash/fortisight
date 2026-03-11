@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Database
+fortisight.db
+
+# Environment variables
+.env
+
+# Scripts
+*.bat
+*.sh
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
