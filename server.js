@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const path = require('path');
@@ -11,35 +11,35 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Database setup
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'fortisight.db');
+// Database setup - PostgreSQL with fallback
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/fortisight',
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 // Initialize database
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database:', err.message);
-    } else {
-        console.log('Connected to SQLite database.');
-        // Create tables if they don't exist
-        db.serialize(() => {
-            // Users table
-            db.run(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    email TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `, (err) => {
-                if (err) {
-                    console.error('Error creating users table:', err.message);
-                } else {
-                    console.log('Users table created or already exists.');
-                }
-            });
-        });
-    }
-});
+const initDatabase = async () => {
+  try {
+    console.log('Connected to PostgreSQL database.');
+    
+    // Create users table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log('Users table created or already exists.');
+  } catch (err) {
+    console.error('Error connecting to database:', err.message);
+    process.exit(1);
+  }
+};
+
+initDatabase();
 
 // Middleware
 app.use(express.json());
@@ -92,42 +92,32 @@ app.post('/api/signup', async (req, res) => {
         }
 
         // Check if email already exists
-        db.get('SELECT email FROM users WHERE email = ?', [email], async (err, row) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
-            }
+        const existingUser = await pool.query('SELECT email FROM users WHERE email = $1', [email]);
+        
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
 
-            if (row) {
-                return res.status(400).json({ error: 'Email already exists' });
-            }
+        // Hash password
+        const saltRounds = 10;
+        const hash = await bcrypt.hash(password, saltRounds);
 
-            // Hash password
-            const saltRounds = 10;
-            bcrypt.hash(password, saltRounds, (err, hash) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Error hashing password' });
-                }
+        // Insert new user
+        const result = await pool.query(
+            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id', 
+            [email, hash]
+        );
 
-                // Insert new user
-                db.run('INSERT INTO users (email, password_hash) VALUES (?, ?)', 
-                    [email, hash], 
-                    function(err) {
-                    if (err) {
-                        return res.status(500).json({ error: 'Error creating user' });
-                    }
-
-                    // Create session
-                    req.session.userId = this.lastID;
-                    
-                    res.json({ 
-                        success: true, 
-                        message: 'Account created successfully',
-                        redirect: '/public/dashboard.html'
-                    });
-                });
-            });
+        // Create session
+        req.session.userId = result.rows[0].id;
+        
+        res.json({ 
+            success: true, 
+            message: 'Account created successfully',
+            redirect: '/public/dashboard.html'
         });
     } catch (error) {
+        console.error('Signup error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -150,36 +140,31 @@ app.post('/api/login', async (req, res) => {
         }
 
         // Find user by email
-        db.get('SELECT id, password_hash FROM users WHERE email = ?', [email], (err, user) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
-            }
+        const userResult = await pool.query('SELECT id, password_hash FROM users WHERE email = $1', [email]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
 
-            if (!user) {
-                return res.status(401).json({ error: 'Invalid email or password' });
-            }
+        const user = userResult.rows[0];
 
-            // Compare password
-            bcrypt.compare(password, user.password_hash, (err, result) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Error comparing password' });
-                }
+        // Compare password
+        const isValidPassword = await bcrypt.compare(password, user.password_hash);
+        
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
 
-                if (!result) {
-                    return res.status(401).json({ error: 'Invalid email or password' });
-                }
-
-                // Create session
-                req.session.userId = user.id;
-                
-                res.json({ 
-                    success: true, 
-                    message: 'Login successful',
-                    redirect: '/dashboard.html'
-                });
-            });
+        // Create session
+        req.session.userId = user.id;
+        
+        res.json({ 
+            success: true, 
+            message: 'Login successful',
+            redirect: '/dashboard.html'
         });
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
