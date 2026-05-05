@@ -101,9 +101,11 @@
       </div>
       
       <div class="video-container">
-        <img src="http://10.11.2.31:8080/stream" 
-             style="width:100%; border-radius:8px;"
-             alt="Live Feed"/>
+        <img id="liveStream" 
+             src="http://10.11.2.31:8080/stream"
+             style="width:100%; border-radius:8px; background:#000;"
+             alt="Live Feed"
+             crossorigin="anonymous"/>
         <div class="video-overlay">
           <div class="timestamp" id="videoTimestamp">2024-03-09 14:45:32</div>
         </div>
