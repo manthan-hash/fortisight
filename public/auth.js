@@ -1,5 +1,14 @@
 // FortiSight Authentication JavaScript - CLEAN VERSION
 
+// ========================================
+// CONFIGURATION
+// ========================================
+
+// CRITICAL: Server IP configuration for cross-device access
+const API_BASE = "http://10.247.227.167:3000";
+
+console.log('🌐 FortiSight Auth Server:', API_BASE);
+
 // Handle Login Form Submission
 async function handleLogin(event) {
     event.preventDefault();
@@ -14,7 +23,7 @@ async function handleLogin(event) {
     if (errorDiv) errorDiv.style.display = 'none';
     
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch(`${API_BASE}/api/login`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -66,7 +75,7 @@ async function handleSignup(event) {
     if (errorDiv) errorDiv.style.display = 'none';
     
     try {
-        const response = await fetch('/api/register', {
+        const response = await fetch(`${API_BASE}/api/register`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -113,7 +122,7 @@ async function handleSignup(event) {
 // Handle Logout
 async function handleLogout() {
     try {
-        const response = await fetch('/api/logout', {
+        const response = await fetch(`${API_BASE}/api/logout`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json'
@@ -140,7 +149,7 @@ async function handleLogout() {
 // Check authentication status
 async function checkAuthStatus() {
     try {
-        const response = await fetch('/auth-status', {
+        const response = await fetch(`${API_BASE}/auth-status`, {
             credentials: 'include'
         });
         const result = await response.json();

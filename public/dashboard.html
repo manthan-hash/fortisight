@@ -119,6 +119,30 @@
       </div>
     </section>
 
+    <!-- ======================================== -->
+    <!-- SURVEILLANCE ALERTS SECTION -->
+    <!-- ======================================== -->
+    <section class="surveillance-alerts">
+      <div class="alerts-header">
+        <h2>🚨 Live Surveillance Alerts</h2>
+        <div class="alerts-stats">
+          <span id="alertCount">0 alerts</span>
+          <span class="refresh-indicator" id="refreshIndicator">🔄 Auto-refreshing...</span>
+        </div>
+      </div>
+      
+      <div id="alertsContainer" class="alerts-container">
+        <div class="no-alerts" id="noAlertsMessage">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+          <p>No surveillance alerts received yet</p>
+          <p class="sub-text">Waiting for Raspberry Pi to send alerts...</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Bottom Section with Widgets and Alerts -->
     <section class="dashboard-bottom">
       <!-- Side Widgets -->
@@ -173,5 +197,6 @@
 
   <script src="auth.js"></script>
   <script src="app.js"></script>
+  <script src="surveillance.js"></script>
 </body>
 </html>

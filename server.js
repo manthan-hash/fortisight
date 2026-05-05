@@ -3,6 +3,9 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const path = require('path');
+const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +48,9 @@ initDatabase();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// CORS middleware - Allow all origins for surveillance system
+app.use(cors());
+
 // Session configuration
 app.use(session({
     secret: 'fortisight-secret-key-change-in-production',
@@ -56,6 +62,52 @@ app.use(session({
     }
 }));
 
+// ========================================
+// SURVEILLANCE SYSTEM CONFIGURATION
+// ========================================
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration for image uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique filename with timestamp
+        const timestamp = Date.now();
+        const originalName = file.originalname;
+        const extension = originalName.split('.').pop();
+        cb(null, `alert_${timestamp}.${extension}`);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        // Accept only image files
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    }
+});
+
+// In-memory storage for alerts (for demo purposes)
+let alerts = [];
+let alertIdCounter = 1;
+
+// Serve uploaded images statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Middleware to check if user is logged in
 function isAuthenticated(req, res, next) {
     if (req.session.userId) {
@@ -66,6 +118,96 @@ function isAuthenticated(req, res, next) {
 }
 
 // Routes
+
+// ========================================
+// SURVEILLANCE SYSTEM API ENDPOINTS
+// ========================================
+
+// POST /api/alert - Receive alerts from Raspberry Pi
+app.post('/api/alert', upload.single('image'), async (req, res) => {
+    try {
+        console.log('🚨 ALERT RECEIVED FROM RASPBERRY PI');
+        
+        // Extract data from form
+        const { distance, timestamp } = req.body;
+        
+        // Validate required fields
+        if (!req.file) {
+            console.log('❌ Error: No image file received');
+            return res.status(400).json({ error: 'Image file is required' });
+        }
+        
+        if (!distance) {
+            console.log('❌ Error: No distance data received');
+            return res.status(400).json({ error: 'Distance data is required' });
+        }
+        
+        // Parse distance as number
+        const distanceNum = parseFloat(distance);
+        if (isNaN(distanceNum)) {
+            console.log('❌ Error: Invalid distance value');
+            return res.status(400).json({ error: 'Invalid distance value' });
+        }
+        
+        // Create alert object
+        const alert = {
+            id: alertIdCounter++,
+            imagePath: `/uploads/${req.file.filename}`,
+            distance: distanceNum,
+            timestamp: timestamp || new Date().toISOString(),
+            riskLevel: distanceNum < 1 ? 'HIGH' : 'LOW'
+        };
+        
+        // Add to alerts array (latest first)
+        alerts.unshift(alert);
+        
+        // Keep only last 100 alerts to prevent memory issues
+        if (alerts.length > 100) {
+            alerts = alerts.slice(0, 100);
+        }
+        
+        // Log alert details
+        console.log(`✅ Alert stored: ID=${alert.id}, Distance=${alert.distance}m, Risk=${alert.riskLevel}`);
+        console.log(`📸 Image saved: ${alert.imagePath}`);
+        console.log(`⏰ Timestamp: ${alert.timestamp}`);
+        console.log(`📊 Total alerts: ${alerts.length}`);
+        console.log('---');
+        
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: 'Alert received and stored successfully',
+            alertId: alert.id,
+            riskLevel: alert.riskLevel
+        });
+        
+    } catch (error) {
+        console.error('❌ Error processing alert:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /api/alerts - Return all alerts for dashboard
+app.get('/api/alerts', (req, res) => {
+    try {
+        console.log(`📋 Dashboard requested ${alerts.length} alerts`);
+        
+        // Return alerts as JSON (already in latest-first order)
+        res.status(200).json({
+            success: true,
+            count: alerts.length,
+            alerts: alerts
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching alerts:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ========================================
+// AUTHENTICATION ROUTES
+// ========================================
 
 // Sign up route
 app.post('/api/signup', async (req, res) => {
@@ -250,10 +392,21 @@ app.get('*', (req, res, next) => {
     }
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`FortiSight server running on port ${PORT}`);
-    console.log(`Visit http://localhost:${PORT}`);
+// ========================================
+// START SERVER
+// ========================================
+
+// Start server with proper port and IP binding for surveillance system
+app.listen(PORT, '0.0.0.0', () => {
+    console.log('🚀 FORSIGHT SURVEILLANCE SYSTEM STARTED');
+    console.log(`📡 Server running on port ${PORT}`);
+    console.log(`🌐 Local access: http://localhost:${PORT}`);
+    console.log(`🌐 Network access: http://10.247.227.167:${PORT}`);
+    console.log(`📸 Alert endpoint: POST http://10.247.227.167:${PORT}/api/alert`);
+    console.log(`📊 Dashboard endpoint: GET http://10.247.227.167:${PORT}/api/alerts`);
+    console.log(`📁 Uploads folder: ${uploadsDir}`);
+    console.log('✅ Ready to receive alerts from Raspberry Pi');
+    console.log('---');
 });
 
 module.exports = app;
