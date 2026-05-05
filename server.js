@@ -48,18 +48,25 @@ initDatabase();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware - Allow all origins for surveillance system
-app.use(cors());
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
 
-// Session configuration
+// Session configuration - Production ready
 app.use(session({
-    secret: 'fortisight-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET || 'fortisight-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Set to true in production with HTTPS
+        secure: true, // Always true for production on Render
+        sameSite: "none", // Required for cross-site cookies
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
+}));
+
+// CORS middleware - EXACT configuration for cookie compatibility
+app.use(cors({
+    origin: "https://fortisight.onrender.com",
+    credentials: true
 }));
 
 // ========================================
@@ -253,10 +260,25 @@ app.post('/api/signup', async (req, res) => {
         // Create session
         req.session.userId = result.rows[0].id;
         
-        res.json({ 
-            success: true, 
-            message: 'Account created successfully',
-            redirect: '/public/dashboard.html'
+        console.log('📧 Signup successful:');
+        console.log('👤 New User ID:', result.rows[0].id);
+        console.log('📧 Email:', email);
+        console.log('🍪 Session ID:', req.sessionID);
+        console.log('🍪 Session data:', req.session);
+        
+        // Explicitly save session
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Session save error:', err);
+                return res.status(500).json({ error: 'Session save failed' });
+            }
+            
+            console.log('✅ Session saved successfully after signup');
+            res.json({ 
+                success: true, 
+                message: 'Account created successfully',
+                redirect: '/public/dashboard.html'
+            });
         });
     } catch (error) {
         console.error('Signup error:', error);
@@ -300,10 +322,24 @@ app.post('/api/login', async (req, res) => {
         // Create session
         req.session.userId = user.id;
         
-        res.json({ 
-            success: true, 
-            message: 'Login successful',
-            redirect: '/dashboard.html'
+        console.log('🔑 Login successful:');
+        console.log('📧 User ID:', user.id);
+        console.log('🍪 Session ID:', req.sessionID);
+        console.log('🍪 Session data:', req.session);
+        
+        // Explicitly save session
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Session save error:', err);
+                return res.status(500).json({ error: 'Session save failed' });
+            }
+            
+            console.log('✅ Session saved successfully');
+            res.json({ 
+                success: true, 
+                message: 'Login successful',
+                redirect: '/dashboard.html'
+            });
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -327,9 +363,16 @@ app.post('/api/logout', (req, res) => {
 
 // Check auth status
 app.get('/auth-status', (req, res) => {
+    console.log('🔍 Auth status check:');
+    console.log('🍪 Session ID:', req.sessionID);
+    console.log('🍪 Session data:', req.session);
+    console.log('👤 User ID in session:', req.session.userId);
+    
     if (req.session.userId) {
+        console.log('✅ User is authenticated');
         res.json({ authenticated: true, userId: req.session.userId });
     } else {
+        console.log('❌ User is not authenticated');
         res.json({ authenticated: false });
     }
 });

@@ -1,13 +1,14 @@
-// FortiSight Authentication JavaScript - CLEAN VERSION
+// FortiSight Authentication JavaScript - PRODUCTION READY
 
 // ========================================
 // CONFIGURATION
 // ========================================
 
-// CRITICAL: Server IP configuration for cross-device access
-const API_BASE = "http://10.247.227.167:3000";
+// Use relative paths for production deployment
+// Works on both local development and production (Render)
+const API_BASE = ""; // Empty for relative paths
 
-console.log('🌐 FortiSight Auth Server:', API_BASE);
+console.log('🌐 FortiSight Auth Server: Using relative paths for production');
 
 // Handle Login Form Submission
 async function handleLogin(event) {
@@ -124,6 +125,7 @@ async function handleLogout() {
     try {
         const response = await fetch(`${API_BASE}/api/logout`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Accept': 'application/json'
             }
