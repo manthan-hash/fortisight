@@ -58,7 +58,6 @@ async function handleLogin(event) {
             errorDiv.textContent = 'Network error. Please try again.';
             errorDiv.classList.add('visible');
         }
-        }
     } finally {
         // Reset button state
         submitBtn.disabled = false;
@@ -119,7 +118,6 @@ async function handleSignup(event) {
         if (errorDiv) {
             errorDiv.textContent = 'Network error. Please try again.';
             errorDiv.classList.add('visible');
-        }
         }
     } finally {
         // Reset button state
