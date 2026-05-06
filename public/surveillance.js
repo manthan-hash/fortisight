@@ -1,6 +1,3 @@
-// Surveillance System - Real-time Dashboard Updates
-// Fetches alerts and dashboard stats from server
-
 async function loadDashboardData() {
     try {
         const alertsRes = await fetch('/api/alerts');
@@ -17,25 +14,34 @@ async function loadDashboardData() {
         const alerts = alertsData.alerts || [];
         const stats = statsData;
 
-        document.getElementById('alertCount').textContent = `${alerts.length} alerts`;
+        const alertCount = document.getElementById('alertCount');
+        if (alertCount) alertCount.textContent = `${alerts.length} alerts`;
 
-        document.getElementById('currentThreatLevel').textContent = stats.currentThreatLevel;
-        document.getElementById('currentRiskScore').innerHTML = 
-            <span class="risk-value">${stats.currentRiskScore}</span>
-            <div class="risk-bar">
-                <div class="risk-fill" style="width: ${stats.currentRiskScore}%; background: ${
-                    stats.currentRiskScore >= 80 ? '#ef4444' :
-                    stats.currentRiskScore >= 50 ? '#f59e0b' : '#10b981'
-                };"></div>
-            </div>
-        ;
+        const currentThreatLevel = document.getElementById('currentThreatLevel');
+        if (currentThreatLevel) currentThreatLevel.textContent = stats.currentThreatLevel;
 
-        document.getElementById('unknownFacesToday').textContent = alerts.length;
-        document.getElementById('knownFacesToday').textContent = 'System Live';
+        const currentRiskScore = document.getElementById('currentRiskScore');
+        if (currentRiskScore) {
+            currentRiskScore.innerHTML = `
+                <span class="risk-value">${stats.currentRiskScore}</span>
+                <div class="risk-bar">
+                    <div class="risk-fill" style="width: ${stats.currentRiskScore}%; background: ${
+                        stats.currentRiskScore >= 80 ? '#ef4444' :
+                        stats.currentRiskScore >= 50 ? '#f59e0b' : '#10b981'
+                    };"></div>
+                </div>
+            `;
+        }
 
-        if (alerts.length > 0) {
-            document.getElementById('lastEventDescription').textContent =
-                `${alerts[0].description} (${alerts[0].riskLevel})`;
+        const unknownFacesToday = document.getElementById('unknownFacesToday');
+        if (unknownFacesToday) unknownFacesToday.textContent = alerts.length;
+
+        const knownFacesToday = document.getElementById('knownFacesToday');
+        if (knownFacesToday) knownFacesToday.textContent = 'System Live';
+
+        const lastEventDescription = document.getElementById('lastEventDescription');
+        if (lastEventDescription && alerts.length > 0) {
+            lastEventDescription.textContent = `${alerts[0].description} (${alerts[0].riskLevel})`;
         }
 
         renderAlertsCards(alerts.slice(0, 6));
@@ -50,8 +56,11 @@ function renderAlertsCards(alerts) {
     const container = document.getElementById('alertsContainer');
     const noAlertsMessage = document.getElementById('noAlertsMessage');
 
+    if (!container) return;
+
     if (!alerts.length) {
         if (noAlertsMessage) noAlertsMessage.style.display = 'block';
+        container.innerHTML = '';
         return;
     }
 
@@ -91,7 +100,6 @@ function renderAlertsCards(alerts) {
 
 function renderRecentAlerts(alerts) {
     const table = document.getElementById('recentAlertsTable');
-
     if (!table) return;
 
     table.innerHTML = alerts.map(alert => `

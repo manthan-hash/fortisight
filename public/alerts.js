@@ -44,32 +44,49 @@ function renderAlertsTable(alerts) {
 }
 
 function openAlertModal(alert) {
-    document.getElementById('modalTimestamp').textContent = new Date(alert.timestamp).toLocaleString();
-    document.getElementById('modalType').textContent = alert.type;
-    document.getElementById('modalLocation').textContent = alert.location;
-    document.getElementById('modalSeverity').textContent = alert.riskLevel;
-    document.querySelector('#modalRiskScore .risk-value').textContent = alert.riskScore;
-    document.getElementById('modalRiskFill').style.width = `${alert.riskScore}%`;
-    document.getElementById('modalRiskFill').style.background = getRiskColor(alert.riskLevel);
-    document.getElementById('modalDescription').textContent = alert.description;
-    document.querySelector('#modalFaceInfo .face-status').textContent = 'Unknown Face';
-    document.querySelector('#modalFaceInfo .face-confidence').textContent = `Distance: ${alert.distance} cm`;
+    const modalTimestamp = document.getElementById('modalTimestamp');
+    const modalType = document.getElementById('modalType');
+    const modalLocation = document.getElementById('modalLocation');
+    const modalSeverity = document.getElementById('modalSeverity');
+    const modalRiskScore = document.querySelector('#modalRiskScore .risk-value');
+    const modalRiskFill = document.getElementById('modalRiskFill');
+    const modalDescription = document.getElementById('modalDescription');
+    const modalFaceStatus = document.querySelector('#modalFaceInfo .face-status');
+    const modalFaceConfidence = document.querySelector('#modalFaceInfo .face-confidence');
+    const modalThumbnail = document.getElementById('modalThumbnail');
+    const modalNotifications = document.getElementById('modalNotifications');
+    const alertModal = document.getElementById('alertModal');
 
-    document.getElementById('modalThumbnail').innerHTML = `
-        <img src="${alert.imagePath}" alt="Alert" style="width:100%; max-width:250px; border-radius:10px;">
-    `;
-
-    document.getElementById('modalNotifications').innerHTML = `
-        <div class="notification-item"><span class="notification-status">Telegram:</span> <span class="notification-result">Sent</span></div>
-        <div class="notification-item"><span class="notification-status">Website:</span> <span class="notification-result">Saved</span></div>
-        <div class="notification-item"><span class="notification-status">Buzzer:</span> <span class="notification-result">${alert.riskLevel === 'HIGH' ? 'Triggered' : 'Standby'}</span></div>
-    `;
-
-    document.getElementById('alertModal').style.display = 'flex';
+    if (modalTimestamp) modalTimestamp.textContent = new Date(alert.timestamp).toLocaleString();
+    if (modalType) modalType.textContent = alert.type;
+    if (modalLocation) modalLocation.textContent = alert.location;
+    if (modalSeverity) modalSeverity.textContent = alert.riskLevel;
+    if (modalRiskScore) modalRiskScore.textContent = alert.riskScore;
+    if (modalRiskFill) {
+        modalRiskFill.style.width = `${alert.riskScore}%`;
+        modalRiskFill.style.background = getRiskColor(alert.riskLevel);
+    }
+    if (modalDescription) modalDescription.textContent = alert.description;
+    if (modalFaceStatus) modalFaceStatus.textContent = 'Unknown Face';
+    if (modalFaceConfidence) modalFaceConfidence.textContent = `Distance: ${alert.distance} cm`;
+    if (modalThumbnail) {
+        modalThumbnail.innerHTML = `
+            <img src="${alert.imagePath}" alt="Alert" style="width:100%; max-width:250px; border-radius:10px;">
+        `;
+    }
+    if (modalNotifications) {
+        modalNotifications.innerHTML = `
+            <div class="notification-item"><span class="notification-status">Telegram:</span> <span class="notification-result">Sent</span></div>
+            <div class="notification-item"><span class="notification-status">Website:</span> <span class="notification-result">Saved</span></div>
+            <div class="notification-item"><span class="notification-status">Buzzer:</span> <span class="notification-result">${alert.riskLevel === 'HIGH' ? 'Triggered' : 'Standby'}</span></div>
+        `;
+    }
+    if (alertModal) alertModal.style.display = 'flex';
 }
 
 function closeAlertModal() {
-    document.getElementById('alertModal').style.display = 'none';
+    const alertModal = document.getElementById('alertModal');
+    if (alertModal) alertModal.style.display = 'none';
 }
 
 function getRiskColor(level) {
