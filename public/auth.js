@@ -218,3 +218,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check authentication status on page load
     checkAuthStatus();
 });
+
+// Function to hide error message
+function hideErrorMessage() {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.classList.remove('visible');
+    }
+}
