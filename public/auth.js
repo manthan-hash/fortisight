@@ -175,6 +175,14 @@ async function checkAuthStatus() {
 
 // Add event listeners when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Hard-clear error message on page load
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+        errorDiv.className = 'error-message';
+    }
+    
     // Add form submission handlers
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');

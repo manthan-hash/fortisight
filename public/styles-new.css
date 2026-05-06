@@ -311,7 +311,7 @@ body::before {
   border-radius: 6px;
   font-size: 14px;
   text-align: center;
-  display: none; /* Hidden by default */
+  display: none !important; /* Hidden by default - override everything */
   animation: errorSlideIn 0.3s ease-out;
 }
 
