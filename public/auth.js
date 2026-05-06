@@ -21,7 +21,10 @@ async function handleLogin(event) {
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span>Logging in...</span>';
-    if (errorDiv) errorDiv.style.display = 'none';
+    if (errorDiv) {
+        errorDiv.classList.remove('visible');
+        errorDiv.style.display = 'none';
+    }
     
     try {
         const response = await fetch(`${API_BASE}/api/login`, {
@@ -46,14 +49,15 @@ async function handleLogin(event) {
             // Show error message
             if (errorDiv) {
                 errorDiv.textContent = result.error;
-                errorDiv.style.display = 'block';
+                errorDiv.classList.add('visible');
             }
         }
     } catch (error) {
         console.error('Login error:', error);
         if (errorDiv) {
             errorDiv.textContent = 'Network error. Please try again.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.add('visible');
+        }
         }
     } finally {
         // Reset button state
@@ -73,7 +77,10 @@ async function handleSignup(event) {
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span>Creating account...</span>';
-    if (errorDiv) errorDiv.style.display = 'none';
+    if (errorDiv) {
+        errorDiv.classList.remove('visible');
+        errorDiv.style.display = 'none';
+    }
     
     try {
         const response = await fetch(`${API_BASE}/api/register`, {
@@ -104,14 +111,15 @@ async function handleSignup(event) {
             // Show error message
             if (errorDiv) {
                 errorDiv.textContent = result.error;
-                errorDiv.style.display = 'block';
+                errorDiv.classList.add('visible');
             }
         }
     } catch (error) {
         console.error('Signup error:', error);
         if (errorDiv) {
             errorDiv.textContent = 'Network error. Please try again.';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.add('visible');
+        }
         }
     } finally {
         // Reset button state
@@ -171,6 +179,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const logoutBtn = document.getElementById('logoutBtn');
+    
+    // Add input event listeners to hide errors when user starts typing
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    
+    if (emailInput) {
+        emailInput.addEventListener('input', hideErrorMessage);
+    }
+    if (passwordInput) {
+        passwordInput.addEventListener('input', hideErrorMessage);
+    }
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', hideErrorMessage);
+    }
     
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
