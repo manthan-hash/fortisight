@@ -311,11 +311,11 @@ body::before {
   border-radius: 6px;
   font-size: 14px;
   text-align: center;
-  display: none !important; /* Hidden by default - override everything */
+  display: none;
 }
 
 .error-message.visible {
-  display: flex; /* Show when visible */
+  display: flex !important;
 }
 
 /* App Layout */

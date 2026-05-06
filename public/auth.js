@@ -45,6 +45,7 @@ async function handleLogin(event) {
             // Show error message
             if (errorDiv) {
                 errorDiv.textContent = result.error;
+                errorDiv.style.display = 'flex';
                 errorDiv.classList.add('visible');
             }
         }
@@ -52,6 +53,7 @@ async function handleLogin(event) {
         console.error('Login error:', error);
         if (errorDiv) {
             errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.style.display = 'flex';
             errorDiv.classList.add('visible');
         }
     } finally {
@@ -102,6 +104,7 @@ async function handleSignup(event) {
             // Show error message
             if (errorDiv) {
                 errorDiv.textContent = result.error;
+                errorDiv.style.display = 'flex';
                 errorDiv.classList.add('visible');
             }
         }
@@ -109,6 +112,7 @@ async function handleSignup(event) {
         console.error('Signup error:', error);
         if (errorDiv) {
             errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.style.display = 'flex';
             errorDiv.classList.add('visible');
         }
     } finally {
