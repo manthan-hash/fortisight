@@ -21,10 +21,6 @@ async function handleLogin(event) {
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span>Logging in...</span>';
-    if (errorDiv) {
-        errorDiv.classList.remove('visible');
-        errorDiv.style.display = 'none';
-    }
     
     try {
         const response = await fetch(`${API_BASE}/api/login`, {
@@ -76,10 +72,6 @@ async function handleSignup(event) {
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span>Creating account...</span>';
-    if (errorDiv) {
-        errorDiv.classList.remove('visible');
-        errorDiv.style.display = 'none';
-    }
     
     try {
         const response = await fetch(`${API_BASE}/api/register`, {
