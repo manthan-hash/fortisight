@@ -1,237 +1,132 @@
-// ========================================
-// FORTISIGHT SURVEILLANCE SYSTEM
-// Real-time Alert Management
-// ========================================
+// Surveillance System - Real-time Dashboard Updates
+// Fetches alerts and dashboard stats from server
 
-// ========================================
-// CONFIGURATION
-// ========================================
+async function loadDashboardData() {
+    try {
+        const alertsRes = await fetch('/api/alerts');
+        const alertsData = await alertsRes.json();
 
-// Use relative paths for production deployment
-// Works on both local development and production (Render)
-const API_BASE = ""; // Empty for relative paths
+        const statsRes = await fetch('/api/dashboard-stats');
+        const statsData = await statsRes.json();
 
-console.log('🌐 FortiSight Server: Using relative paths for production');
-
-class SurveillanceSystem {
-    constructor() {
-        this.alerts = [];
-        this.refreshInterval = null;
-        this.isRefreshing = false;
-        this.init();
-    }
-
-    // Initialize the surveillance system
-    init() {
-        console.log('🚨 Initializing FortiSight Surveillance System...');
-        console.log(`🌐 API Base URL: ${API_BASE}`);
-        
-        // Start auto-refresh
-        this.startAutoRefresh();
-        
-        // Initial fetch
-        this.fetchAlerts();
-        
-        console.log('✅ Surveillance system initialized');
-    }
-
-    // Start auto-refresh every 3 seconds
-    startAutoRefresh() {
-        this.refreshInterval = setInterval(() => {
-            this.fetchAlerts();
-        }, 3000); // 3 seconds
-        
-        console.log('🔄 Auto-refresh started (every 3 seconds)');
-    }
-
-    // Fetch alerts from backend API
-    async fetchAlerts() {
-        if (this.isRefreshing) {
-            console.log('⏳ Already refreshing, skipping...');
+        if (!alertsData.success || !statsData.success) {
+            console.error('Failed to load surveillance data');
             return;
         }
 
-        this.isRefreshing = true;
-        this.updateRefreshIndicator('🔄 Fetching alerts...');
+        const alerts = alertsData.alerts || [];
+        const stats = statsData;
 
-        try {
-            console.log('📡 Fetching alerts from backend...');
-            
-            const response = await fetch(`${API_BASE}/api/alerts`);
-            const data = await response.json();
-            
-            if (data.success) {
-                this.alerts = data.alerts;
-                this.renderAlerts();
-                this.updateAlertCount(data.count);
-                
-                console.log(`✅ Received ${data.count} alerts`);
-            } else {
-                console.error('❌ Error in API response:', data);
-                this.showError('Failed to fetch alerts');
-            }
-            
-        } catch (error) {
-            console.error('❌ Error fetching alerts:', error);
-            this.showError('Network error - check connection');
-        } finally {
-            this.isRefreshing = false;
-            this.updateRefreshIndicator('🔄 Auto-refreshing...');
-        }
-    }
+        document.getElementById('alertCount').textContent = `${alerts.length} alerts`;
 
-    // Render alerts in the dashboard
-    renderAlerts() {
-        const container = document.getElementById('alertsContainer');
-        const noAlertsMessage = document.getElementById('noAlertsMessage');
-        
-        if (!container) return;
-
-        // Clear existing alerts (except no-alerts message)
-        const existingAlerts = container.querySelectorAll('.alert-card');
-        existingAlerts.forEach(alert => alert.remove());
-
-        if (this.alerts.length === 0) {
-            // Show no alerts message
-            if (noAlertsMessage) {
-                noAlertsMessage.style.display = 'block';
-            }
-            return;
-        }
-
-        // Hide no alerts message
-        if (noAlertsMessage) {
-            noAlertsMessage.style.display = 'none';
-        }
-
-        // Render each alert
-        this.alerts.forEach(alert => {
-            const alertCard = this.createAlertCard(alert);
-            container.appendChild(alertCard);
-        });
-
-        console.log(`📊 Rendered ${this.alerts.length} alert cards`);
-    }
-
-    // Create alert card element
-    createAlertCard(alert) {
-        const card = document.createElement('div');
-        card.className = `alert-card ${alert.riskLevel === 'HIGH' ? 'high-risk' : 'low-risk'}`;
-        
-        const riskBadge = alert.riskLevel === 'HIGH' 
-            ? '<span class="risk-badge high">🔴 HIGH RISK</span>'
-            : '<span class="risk-badge low">🟢 LOW RISK</span>';
-
-        const formattedTime = new Date(alert.timestamp).toLocaleString();
-
-        card.innerHTML = `
-            <div class="alert-header">
-                <div class="alert-info">
-                    <span class="alert-id">Alert #${alert.id}</span>
-                    ${riskBadge}
-                </div>
-                <div class="alert-time">${formattedTime}</div>
+        document.getElementById('currentThreatLevel').textContent = stats.currentThreatLevel;
+        document.getElementById('currentRiskScore').innerHTML = 
+            <span class="risk-value">${stats.currentRiskScore}</span>
+            <div class="risk-bar">
+                <div class="risk-fill" style="width: ${stats.currentRiskScore}%; background: ${
+                    stats.currentRiskScore >= 80 ? '#ef4444' :
+                    stats.currentRiskScore >= 50 ? '#f59e0b' : '#10b981'
+                };"></div>
             </div>
-            
-            <div class="alert-content">
-                <div class="alert-image">
-                    <img src="${API_BASE}${alert.imagePath}" alt="Surveillance image" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="image-error" style="display: none;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <circle cx="8.5" cy="8.5" r="1.5"/>
-                            <polyline points="21 15 16 10 5 21"/>
-                        </svg>
-                        <span>Image not available</span>
-                    </div>
-                </div>
-                
-                <div class="alert-details">
-                    <div class="alert-metric">
-                        <span class="metric-label">Distance:</span>
-                        <span class="metric-value">${alert.distance}m</span>
-                    </div>
-                    <div class="alert-metric">
-                        <span class="metric-label">Risk Level:</span>
-                        <span class="metric-value risk-${alert.riskLevel.toLowerCase()}">${alert.riskLevel}</span>
-                    </div>
-                </div>
-            </div>
-        `;
+        ;
 
-        return card;
-    }
+        document.getElementById('unknownFacesToday').textContent = alerts.length;
+        document.getElementById('knownFacesToday').textContent = 'System Live';
 
-    // Update alert count display
-    updateAlertCount(count) {
-        const countElement = document.getElementById('alertCount');
-        if (countElement) {
-            countElement.textContent = `${count} alert${count !== 1 ? 's' : ''}`;
+        if (alerts.length > 0) {
+            document.getElementById('lastEventDescription').textContent =
+                `${alerts[0].description} (${alerts[0].riskLevel})`;
         }
-    }
 
-    // Update refresh indicator
-    updateRefreshIndicator(text) {
-        const indicator = document.getElementById('refreshIndicator');
-        if (indicator) {
-            indicator.textContent = text;
-        }
-    }
+        renderAlertsCards(alerts.slice(0, 6));
+        renderRecentAlerts(alerts.slice(0, 5));
 
-    // Show error message
-    showError(message) {
-        const container = document.getElementById('alertsContainer');
-        if (!container) return;
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span>${message}</span>
-        `;
-
-        container.appendChild(errorDiv);
-
-        // Remove error message after 5 seconds
-        setTimeout(() => {
-            if (errorDiv.parentNode) {
-                errorDiv.parentNode.removeChild(errorDiv);
-            }
-        }, 5000);
-    }
-
-    // Stop auto-refresh (for cleanup)
-    stopAutoRefresh() {
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-            this.refreshInterval = null;
-            console.log('⏹️ Auto-refresh stopped');
-        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
     }
 }
 
-// ========================================
-// INITIALIZATION
-// ========================================
+function renderAlertsCards(alerts) {
+    const container = document.getElementById('alertsContainer');
+    const noAlertsMessage = document.getElementById('noAlertsMessage');
 
-// Wait for DOM to be loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📱 DOM loaded, starting surveillance system...');
-    
-    // Initialize surveillance system
-    window.surveillanceSystem = new SurveillanceSystem();
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', function() {
-        if (window.surveillanceSystem) {
-            window.surveillanceSystem.stopAutoRefresh();
-        }
-    });
-    
-    console.log('✅ Surveillance system ready');
+    if (!alerts.length) {
+        if (noAlertsMessage) noAlertsMessage.style.display = 'block';
+        return;
+    }
+
+    if (noAlertsMessage) noAlertsMessage.style.display = 'none';
+
+    container.innerHTML = alerts.map(alert => `
+        <div class="alert-card" style="
+            background:#1f2937;
+            border-radius:12px;
+            padding:16px;
+            margin-bottom:16px;
+            display:flex;
+            gap:16px;
+            align-items:center;
+        ">
+            <img src="${alert.imagePath}" alt="Alert Image" style="
+                width:140px;
+                height:100px;
+                object-fit:cover;
+                border-radius:8px;
+                border:2px solid ${getRiskColor(alert.riskLevel)};
+            " />
+            <div style="flex:1;">
+                <h4 style="margin:0 0 8px 0; color:${getRiskColor(alert.riskLevel)};">
+                    ${alert.type}
+                </h4>
+                <p style="margin:4px 0;">Distance: ${alert.distance} cm</p>
+                <p style="margin:4px 0;">Risk: ${alert.riskLevel} (${alert.riskScore})</p>
+                <p style="margin:4px 0;">Location: ${alert.location}</p>
+                <p style="margin:4px 0; font-size:12px; color:#9ca3af;">
+                    ${new Date(alert.timestamp).toLocaleString()}
+                </p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderRecentAlerts(alerts) {
+    const table = document.getElementById('recentAlertsTable');
+
+    if (!table) return;
+
+    table.innerHTML = alerts.map(alert => `
+        <div class="table-row" style="
+            display:grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            padding:12px 0;
+            border-bottom:1px solid #374151;
+        ">
+            <div>${new Date(alert.timestamp).toLocaleTimeString()}</div>
+            <div>${alert.type}</div>
+            <div style="color:${getRiskColor(alert.riskLevel)}; font-weight:bold;">
+                ${alert.riskLevel}
+            </div>
+        </div>
+    `).join('');
+}
+
+function getRiskColor(level) {
+    if (level === 'HIGH') return '#ef4444';
+    if (level === 'MEDIUM') return '#f59e0b';
+    return '#10b981';
+}
+
+function updateVideoTimestamp() {
+    const el = document.getElementById('videoTimestamp');
+    if (el) {
+        el.textContent = new Date().toLocaleString();
+    }
+}
+
+setInterval(loadDashboardData, 5000);
+setInterval(updateVideoTimestamp, 1000);
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardData();
+    updateVideoTimestamp();
 });

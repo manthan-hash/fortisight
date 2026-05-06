@@ -6,9 +6,11 @@ const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const PISTREAMURL = 'http://10.11.2.31:8080';
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -115,6 +117,19 @@ let alertIdCounter = 1;
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Live stream proxy to Raspberry Pi
+app.use('/live-stream', createProxyMiddleware({
+    target: PISTREAMURL,
+    changeOrigin: true,
+    pathRewrite: {
+        '^/live-stream': '/stream'
+    },
+    onError: (err, req, res) => {
+        console.error('❌ Live stream proxy error:', err.message);
+        res.status(500).send('Live stream unavailable');
+    }
+}));
+
 // Middleware to check if user is logged in
 function isAuthenticated(req, res, next) {
     if (req.session.userId) {
@@ -156,13 +171,32 @@ app.post('/api/alert', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'Invalid distance value' });
         }
         
-        // Create alert object
+        // Create alert object with proper risk calculation
+        let riskLevel = 'LOW';
+        let riskScore = 25;
+        
+        if (distanceNum < 70) {
+            riskLevel = 'HIGH';
+            riskScore = 90;
+        } else if (distanceNum < 120) {
+            riskLevel = 'MEDIUM';
+            riskScore = 60;
+        } else {
+            riskLevel = 'LOW';
+            riskScore = 30;
+        }
+        
         const alert = {
             id: alertIdCounter++,
             imagePath: `/uploads/${req.file.filename}`,
             distance: distanceNum,
             timestamp: timestamp || new Date().toISOString(),
-            riskLevel: distanceNum < 1 ? 'HIGH' : 'LOW'
+            riskLevel,
+            riskScore,
+            type: 'Unknown Face',
+            location: 'Front Entrance',
+            status: 'Active',
+            description: `Unknown person detected at distance ${distanceNum} cm`
         };
         
         // Add to alerts array (latest first)
@@ -411,6 +445,35 @@ app.get('/public/dashboard.html', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
+// Dashboard statistics endpoint
+app.get('/api/dashboard-stats', (req, res) => {
+    try {
+        const totalAlerts = alerts.length;
+        const highAlerts = alerts.filter(a => a.riskLevel === 'HIGH').length;
+        const mediumAlerts = alerts.filter(a => a.riskLevel === 'MEDIUM').length;
+        const lowAlerts = alerts.filter(a => a.riskLevel === 'LOW').length;
+
+        const latestAlert = alerts[0] || null;
+
+        const currentThreatLevel = latestAlert ? latestAlert.riskLevel : 'LOW';
+        const currentRiskScore = latestAlert ? latestAlert.riskScore : 0;
+
+        res.json({
+            success: true,
+            totalAlerts,
+            highAlerts,
+            mediumAlerts,
+            lowAlerts,
+            currentThreatLevel,
+            currentRiskScore,
+            latestAlert
+        });
+    } catch (error) {
+        console.error('❌ Error fetching dashboard stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.get('/dashboard.html', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
@@ -444,10 +507,10 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('🚀 FORSIGHT SURVEILLANCE SYSTEM STARTED');
     console.log(`📡 Server running on port ${PORT}`);
     console.log(`🌐 Local access: http://localhost:${PORT}`);
-    console.log(`🌐 Network access: http://10.247.227.167:${PORT}`);
-    console.log(`📸 Alert endpoint: POST http://10.247.227.167:${PORT}/api/alert`);
-    console.log(`📊 Dashboard endpoint: GET http://10.247.227.167:${PORT}/api/alerts`);
-    console.log(`📁 Uploads folder: ${uploadsDir}`);
+    console.log(`🌐 Network access: http://0.0.0.0:${PORT}`);
+    console.log(`📸 Alert endpoint: POST http://0.0.0.0:${PORT}/api/alert`);
+    console.log(`📊 Dashboard endpoint: GET http://0.0.0.0:${PORT}/api/alerts`);
+    console.log(`🎥 Live stream proxy: http://0.0.0.0:${PORT}/live-stream`);
     console.log('✅ Ready to receive alerts from Raspberry Pi');
     console.log('---');
 });
