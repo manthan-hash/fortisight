@@ -40,7 +40,7 @@ const initDatabase = async () => {
     console.log('Users table created or already exists.');
   } catch (err) {
     console.error('Error connecting to database:', err.message);
-    process.exit(1);
+    // process.exit(1);
   }
 };
 
