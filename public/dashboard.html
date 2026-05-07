@@ -101,26 +101,13 @@
       </div>
       
       <div class="video-container">
-        <img id="liveStream" 
+        <img src="http://10.11.2.31:8080/stream"
              style="width:100%; height:100%; object-fit:cover;"
              alt="Live Feed"/>
         <div class="video-overlay">
           <div class="timestamp" id="videoTimestamp">2024-03-09 14:45:32</div>
         </div>
       </div>
-
-<script>
-function startStream() {
-    const img = document.getElementById('liveStream');
-    const url = 'https://jogger-fable-unstirred.ngrok-free.dev/stream';
-    img.src = url + '?t=' + new Date().getTime();
-    img.onerror = function() {
-        console.log('Stream dropped, reconnecting in 2s...');
-        setTimeout(startStream, 2000);
-    };
-}
-startStream();
-</script>
       
       <div class="event-info">
         <p class="event-description" id="lastEventDescription">Unknown face detected 2 min ago</p>
