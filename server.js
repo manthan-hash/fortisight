@@ -7,6 +7,7 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,10 +17,14 @@ const PISTREAMURL = 'http://10.11.2.31:8080';
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Database setup - PostgreSQL with fallback
+// Database setup - PostgreSQL with environment variables
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/fortisight',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'fortisight',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
+  ssl: false // Local development
 });
 
 // Initialize database
@@ -50,24 +55,21 @@ initDatabase();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Trust proxy for Render deployment
-app.set('trust proxy', 1);
-
-// Session configuration - Production ready
+// Session configuration - Local development
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fortisight-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true, // Always true for production on Render
-        sameSite: "none", // Required for cross-site cookies
+        secure: false, // false for local development
+        sameSite: "lax", // lax for local development
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
 
-// CORS middleware - EXACT configuration for cookie compatibility
+// CORS middleware - Local development configuration
 app.use(cors({
-    origin: "https://fortisight.onrender.com",
+    origin: "http://localhost:3000",
     credentials: true
 }));
 

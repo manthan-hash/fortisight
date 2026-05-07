@@ -2,7 +2,7 @@
 """
 ========================================
 FORTISIGHT RASPBERRY PI CLIENT
-Server IP: http://10.247.227.167:3000
+Server IP: http://10.251.42.167:3000
 ========================================
 """
 
@@ -16,7 +16,7 @@ import numpy as np
 # ========================================
 # CRITICAL CONFIGURATION
 # ========================================
-API_URL = "http://10.247.227.167:3000/api/alert"
+API_URL = "http://10.251.42.167:3000/api/alert"
 CAPTURE_INTERVAL = 5  # seconds between captures
 IMAGE_PATH = "/tmp/fortisight_capture.jpg"
 
