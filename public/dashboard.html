@@ -102,25 +102,24 @@
       
       <div class="video-container">
         <img id="liveStream" 
-             src="https://jogger-fable-unstirred.ngrok-free.dev/stream"
              style="width:100%; height:100%; object-fit:cover;"
-             alt="Live Feed"
-             onerror="this.src='https://jogger-fable-unstirred.ngrok-free.dev/stream'"/>
+             alt="Live Feed"/>
         <div class="video-overlay">
           <div class="timestamp" id="videoTimestamp">2024-03-09 14:45:32</div>
         </div>
       </div>
 
 <script>
-// Bypass ngrok browser warning
-const stream = document.getElementById('liveStream');
-const streamUrl = 'https://jogger-fable-unstirred.ngrok-free.dev/stream';
-
-fetch(streamUrl, {
-    headers: { 'ngrok-skip-browser-warning': 'true' }
-}).then(response => {
-    stream.src = streamUrl;
-});
+function startStream() {
+    const img = document.getElementById('liveStream');
+    const url = 'https://jogger-fable-unstirred.ngrok-free.dev/stream';
+    img.src = url + '?t=' + new Date().getTime();
+    img.onerror = function() {
+        console.log('Stream dropped, reconnecting in 2s...');
+        setTimeout(startStream, 2000);
+    };
+}
+startStream();
 </script>
       
       <div class="event-info">
